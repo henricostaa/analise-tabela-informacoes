@@ -1,7 +1,17 @@
 import streamlit as st
 import pandas as pd
 
+st.set_page_config(
+    page_title="Dashboard de Análise de Logins",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 st.title("Dashboard de Análise de Logins")
+st.caption(
+    "Visão geral minimalista dos logins mais recentes, com filtros rápidos "
+    "para cidades, gêneros e aniversários."
+)
 
 @st.cache_data
 def load_data():
@@ -19,6 +29,7 @@ def load_data():
 df = load_data()
 
 st.sidebar.title("Filtros")
+st.sidebar.caption("Refine a visualização com poucos cliques.")
 
 # Filtro por cidade
 cidades = df["cidade"].dropna().unique().tolist()
@@ -26,7 +37,6 @@ cidades.sort()
 cidade_selecionada = st.sidebar.multiselect(
     "Selecione a(s) cidade(s)",
     options=cidades,
-    default=cidades
 )
 
 # Filtro por gênero
@@ -35,7 +45,6 @@ generos.sort()
 genero_selecionado = st.sidebar.multiselect(
     "Selecione o(s) gênero(s)",
     options=generos,
-    default=generos
 )
 
 # Filtro de mês
@@ -49,7 +58,6 @@ meses.sort(key=lambda x: ordem_mes.index(x))
 mes_selecionado = st.sidebar.multiselect(
     "Selecione o(s) mês(es) de aniversário",
     options=meses,
-    default=meses
 )
 
 df_filtrado = df.copy()
@@ -67,37 +75,51 @@ st.subheader("Métricas Gerais")
 
 col1, col2, col3 = st.columns(3)
 
-col1.metric("Total de usuários", df_filtrado.shape[0])
-col2.metric("Cidades", df_filtrado["cidade"].nunique())
-col3.metric("Gêneros", df_filtrado["genero"].nunique())
+col1.metric("Total de usuários", df_filtrado.shape[0], border=True)
+col2.metric("Cidades", df_filtrado["cidade"].nunique(), border=True)
+col3.metric("Gêneros", df_filtrado["genero"].nunique(), border=True)
 
 st.divider()
 
-st.subheader("Logins por Cidade")
+col_left, col_right = st.columns((1, 1))
 
-df_cidade = (
-    df_filtrado.groupby("cidade")["ultimo_login"]
-    .count()
-    .reset_index()
-    .dropna()
-    .sort_values(by="ultimo_login", ascending=False)
-)
+with col_left:
+    st.subheader("Logins por Cidade")
+    df_cidade = (
+        df_filtrado.groupby("cidade")["ultimo_login"]
+        .count()
+        .reset_index()
+        .dropna()
+        .sort_values(by="ultimo_login", ascending=False)
+    )
+    st.bar_chart(
+        df_cidade.head(5),
+        x="cidade",
+        y="ultimo_login",
+        use_container_width=True,
+        x_label="Cidade",
+        y_label="Logins",
+        color="#EF4444",
+    )
 
-st.bar_chart(df_cidade.head(5), x="cidade", y="ultimo_login", use_container_width=True, x_label="Cidade", y_label="Logins")
-
-st.divider()
-
-st.subheader("Logins por Gênero")
-
-df_genero = (
-    df_filtrado.groupby("genero")["ultimo_login"]
-    .count()
-    .reset_index()
-    .dropna()
-    .sort_values(by="ultimo_login", ascending=False)
-)
-
-st.bar_chart(df_genero, x="genero", y="ultimo_login", use_container_width=True, x_label="Gênero", y_label="Logins")
+with col_right:
+    st.subheader("Logins por Gênero")
+    df_genero = (
+        df_filtrado.groupby("genero")["ultimo_login"]
+        .count()
+        .reset_index()
+        .dropna()
+        .sort_values(by="ultimo_login", ascending=False)
+    )
+    st.bar_chart(
+        df_genero,
+        x="genero",
+        y="ultimo_login",
+        use_container_width=True,
+        x_label="Gênero",
+        y_label="Logins",
+        color="#EF4444"       
+    )
 
 st.divider()
 
@@ -114,6 +136,14 @@ df_mes = (
     .reset_index(name="aniversarios")
 )
 
-st.bar_chart(df_mes, x="mes", y="aniversarios", use_container_width=True, x_label="Mês", y_label="Aniversários")
+st.bar_chart(
+    df_mes,
+    x="mes",
+    y="aniversarios",
+    use_container_width=True,
+    x_label="Mês",
+    y_label="Aniversários",
+    color="#EF4444"
+)
 
 st.divider()
